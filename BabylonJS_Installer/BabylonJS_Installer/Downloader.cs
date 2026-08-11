@@ -11,8 +11,11 @@ namespace BabylonJS_Installer
     {
         private static readonly string Url_github = "github.com";
         private static readonly string Api_url_github = $"api.{Url_github}";
-        private static readonly string Url_download = $"https://{Url_github}/BabylonJS/Exporters/releases/download";
-        private static readonly string Url_github_API_releases = $"https://{Api_url_github}/repos/BabylonJS/Exporters/releases";
+        // Personal fork: BabylonJS upstream does not ship Maya 2025+ exporters
+        private static readonly string RepoOwner = "parashivbrl";
+        private static readonly string RepoName = "Exporters";
+        private static readonly string Url_download = $"https://{Url_github}/{RepoOwner}/{RepoName}/releases/download";
+        private static readonly string Url_github_API_releases = $"https://{Api_url_github}/repos/{RepoOwner}/{RepoName}/releases";
         
         private string software = "";
         private string version = "";
