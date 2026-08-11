@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <OutputType>Library</OutputType>
     <RootNamespace>Maya2Babylon</RootNamespace>
@@ -14,26 +14,27 @@
     <PlatformTarget>x64</PlatformTarget>
     <EnableDefaultItems>false</EnableDefaultItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <!-- Keep output at bin\Release\2026\ (no net8.0-windows suffix) to match other Maya year projects and CD packaging -->
+    <!-- Keep output at bin\Release\2027\ (no net10.0-windows suffix) to match other Maya year projects and CD packaging -->
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <!-- This plugin runs exclusively on Windows inside Maya; suppress Windows-only API warnings -->
-    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <!-- WFO1000: legacy WinForms designer properties lack codegen attributes; safe to ignore for Maya plugins -->
+    <NoWarn>$(NoWarn);CA1416;WFO1000</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DefineConstants>TRACE;DEBUG;MAYA2026;MAYA_NETCORE</DefineConstants>
-    <OutputPath>bin\Debug\2026\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;MAYA2027;MAYA_NETCORE</DefineConstants>
+    <OutputPath>bin\Debug\2027\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DefineConstants>TRACE;MAYA2026;MAYA_NETCORE</DefineConstants>
-    <OutputPath>bin\Release\2026\</OutputPath>
+    <DefineConstants>TRACE;MAYA2027;MAYA_NETCORE</DefineConstants>
+    <OutputPath>bin\Release\2027\</OutputPath>
   </PropertyGroup>
 
-  <!-- Maya 2026 .NET 8 SDK -->
+  <!-- Maya 2027 .NET 10 SDK -->
   <ItemGroup>
     <Reference Include="openmayacs">
-      <HintPath>Refs\2026\openmayacs.dll</HintPath>
+      <HintPath>Refs\2027\openmayacs.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
@@ -153,43 +154,43 @@
 
   <!-- Post-build: copy to assemblies and Maya plugin dir -->
   <Target Name="CopyToAssemblies" AfterTargets="Build">
-    <MakeDir Directories="$(SolutionDir)assemblies\2026" />
-    <Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(SolutionDir)assemblies\2026" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(SolutionDir)assemblies\2026" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(SolutionDir)assemblies\2026" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
-    <!-- Runtime config is required for Maya 2026 (.NET 8) plugin host initialization -->
-    <Copy SourceFiles="$(ProjectDir)Refs\2026\openmayacs.runtimeconfig.json" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(ProjectDir)Refs\2026\openmayacs.runtimeconfig.json" DestinationFolder="$(SolutionDir)assemblies\2026" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
+    <MakeDir Directories="$(SolutionDir)assemblies\2027" />
+    <Copy SourceFiles="@(ReferenceCopyLocalPaths)" DestinationFolder="$(SolutionDir)assemblies\2027" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(SolutionDir)assemblies\2027" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(SolutionDir)assemblies\2027" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
+    <!-- Runtime config is required for Maya 2027 (.NET 10) plugin host initialization -->
+    <Copy SourceFiles="$(ProjectDir)Refs\2027\openmayacs.runtimeconfig.json" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(ProjectDir)Refs\2027\openmayacs.runtimeconfig.json" DestinationFolder="$(SolutionDir)assemblies\2027" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
   </Target>
 
   <!-- Post-build: deploy as Maya module -->
   <PropertyGroup>
-    <Maya2026ModulesDir>$(USERPROFILE)\Documents\maya\2026\modules</Maya2026ModulesDir>
-    <Maya2026ModuleRootDir>$(Maya2026ModulesDir)\Maya2Babylon</Maya2026ModuleRootDir>
-    <Maya2026PluginsDir>$(Maya2026ModuleRootDir)\plug-ins\</Maya2026PluginsDir>
-    <Maya2026ModFile>$(Maya2026ModulesDir)\Maya2Babylon.mod</Maya2026ModFile>
-    <!-- Optional override: set MAYA2026_BIN_DIR or pass /p:MayaBinDir=... for non-default installs -->
-    <MayaBinDir Condition="'$(MayaBinDir)' == '' and '$(MAYA2026_BIN_DIR)' != ''">$(MAYA2026_BIN_DIR)</MayaBinDir>
-    <MayaBinDir Condition="'$(MayaBinDir)' == ''">C:\Program Files\Autodesk\Maya2026\bin\</MayaBinDir>
+    <Maya2027ModulesDir>$(USERPROFILE)\Documents\maya\2027\modules</Maya2027ModulesDir>
+    <Maya2027ModuleRootDir>$(Maya2027ModulesDir)\Maya2Babylon</Maya2027ModuleRootDir>
+    <Maya2027PluginsDir>$(Maya2027ModuleRootDir)\plug-ins\</Maya2027PluginsDir>
+    <Maya2027ModFile>$(Maya2027ModulesDir)\Maya2Babylon.mod</Maya2027ModFile>
+    <!-- Optional override: set MAYA2027_BIN_DIR or pass /p:MayaBinDir=... for non-default installs -->
+    <MayaBinDir Condition="'$(MayaBinDir)' == '' and '$(MAYA2027_BIN_DIR)' != ''">$(MAYA2027_BIN_DIR)</MayaBinDir>
+    <MayaBinDir Condition="'$(MayaBinDir)' == ''">C:\Program Files\Autodesk\Maya2027\bin\</MayaBinDir>
   </PropertyGroup>
-  <Target Name="DeployToMaya2026" AfterTargets="Build" Condition="Exists('$(USERPROFILE)\Documents\maya\2026\')">
-    <MakeDir Directories="$(Maya2026ModulesDir)" />
-    <MakeDir Directories="$(Maya2026PluginsDir)" />
+  <Target Name="DeployToMaya2027" AfterTargets="Build" Condition="Exists('$(USERPROFILE)\Documents\maya\2027\')">
+    <MakeDir Directories="$(Maya2027ModulesDir)" />
+    <MakeDir Directories="$(Maya2027PluginsDir)" />
     <!-- Plugin DLL and deps -->
-    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
-    <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
+    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
     <!-- Dependency DLLs -->
-    <Copy SourceFiles="$(TargetDir)GDImageLibrary.dll" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)GDImageLibrary.dll')" />
-    <Copy SourceFiles="$(TargetDir)Newtonsoft.Json.dll" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)Newtonsoft.Json.dll')" />
-    <Copy SourceFiles="$(TargetDir)TQ.Texture.dll" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)TQ.Texture.dll')" />
-    <Copy SourceFiles="$(TargetDir)TargaImage.dll" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)TargaImage.dll')" />
-    <!-- Maya 2026 .NET 8 runtime files -->
-    <Copy SourceFiles="$(MayaBinDir)openmayacs.dll" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(MayaBinDir)openmayacs.dll')" />
-    <Copy SourceFiles="$(ProjectDir)Refs\2026\openmayacs.runtimeconfig.json" DestinationFolder="$(Maya2026PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(TargetDir)GDImageLibrary.dll" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)GDImageLibrary.dll')" />
+    <Copy SourceFiles="$(TargetDir)Newtonsoft.Json.dll" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)Newtonsoft.Json.dll')" />
+    <Copy SourceFiles="$(TargetDir)TQ.Texture.dll" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)TQ.Texture.dll')" />
+    <Copy SourceFiles="$(TargetDir)TargaImage.dll" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)TargaImage.dll')" />
+    <!-- Maya 2027 .NET 10 runtime files -->
+    <Copy SourceFiles="$(MayaBinDir)openmayacs.dll" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(MayaBinDir)openmayacs.dll')" />
+    <Copy SourceFiles="$(ProjectDir)Refs\2027\openmayacs.runtimeconfig.json" DestinationFolder="$(Maya2027PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
     <!-- Write Maya module descriptor (.mod) -->
     <!-- Use relative path so the .mod file is portable across machines -->
-    <WriteLinesToFile File="$(Maya2026ModFile)" Lines="+ Maya2Babylon 1.0 ./Maya2Babylon;plug-ins: plug-ins" Overwrite="true" Encoding="ASCII" />
-    <Message Text="Deployed Maya2Babylon module to $(Maya2026ModuleRootDir)" Importance="high" />
+    <WriteLinesToFile File="$(Maya2027ModFile)" Lines="+ Maya2Babylon 1.0 ./Maya2Babylon;plug-ins: plug-ins" Overwrite="true" Encoding="ASCII" />
+    <Message Text="Deployed Maya2Babylon module to $(Maya2027ModuleRootDir)" Importance="high" />
   </Target>
 
 </Project>
