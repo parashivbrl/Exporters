@@ -160,6 +160,9 @@
     <!-- Runtime config is required for Maya 2025 (.NET 8) plugin host initialization -->
     <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.runtimeconfig.json" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
     <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.runtimeconfig.json" DestinationFolder="$(SolutionDir)assemblies\2025" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
+    <!-- openmayacs.dll is required next to the plugin for .NET Core host init (BabylonJS/Exporters#1153) -->
+    <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" Condition="Exists('$(ProjectDir)Refs\2025\openmayacs.dll')" />
+    <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.dll" DestinationFolder="$(SolutionDir)assemblies\2025" SkipUnchangedFiles="true" Condition="Exists('$(ProjectDir)Refs\2025\openmayacs.dll')" />
   </Target>
 
   <!-- Post-build: deploy as Maya module -->
@@ -183,9 +186,11 @@
     <Copy SourceFiles="$(TargetDir)Newtonsoft.Json.dll" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)Newtonsoft.Json.dll')" />
     <Copy SourceFiles="$(TargetDir)TQ.Texture.dll" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)TQ.Texture.dll')" />
     <Copy SourceFiles="$(TargetDir)TargaImage.dll" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(TargetDir)TargaImage.dll')" />
-    <!-- Maya 2025 .NET 8 runtime files -->
-    <Copy SourceFiles="$(MayaBinDir)openmayacs.dll" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="Exists('$(MayaBinDir)openmayacs.dll')" />
-    <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.runtimeconfig.json" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="true" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <!-- .NET Core host files: prefer installed Maya bin (must match this Maya year), fallback to Refs -->
+    <Copy SourceFiles="$(MayaBinDir)openmayacs.dll" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="false" ContinueOnError="true" Condition="Exists('$(MayaBinDir)openmayacs.dll')" />
+    <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.dll" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="false" ContinueOnError="true" Condition="!Exists('$(MayaBinDir)openmayacs.dll') and Exists('$(ProjectDir)Refs\2025\openmayacs.dll')" />
+    <Copy SourceFiles="$(MayaBinDir)openmayacs.runtimeconfig.json" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="false" ContinueOnError="true" Condition="Exists('$(MayaBinDir)openmayacs.runtimeconfig.json')" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(ProjectDir)Refs\2025\openmayacs.runtimeconfig.json" DestinationFolder="$(Maya2025PluginsDir)" SkipUnchangedFiles="false" ContinueOnError="true" Condition="!Exists('$(MayaBinDir)openmayacs.runtimeconfig.json') and Exists('$(ProjectDir)Refs\2025\openmayacs.runtimeconfig.json')" OverwriteReadOnlyFiles="true" />
     <!-- Write Maya module descriptor (.mod) -->
     <!-- Use relative path so the .mod file is portable across machines -->
     <WriteLinesToFile File="$(Maya2025ModFile)" Lines="+ Maya2Babylon 1.0 ./Maya2Babylon;plug-ins: plug-ins" Overwrite="true" Encoding="ASCII" />

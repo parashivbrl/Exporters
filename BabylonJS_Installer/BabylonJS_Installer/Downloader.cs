@@ -215,6 +215,7 @@ namespace BabylonJS_Installer
                 if (this.software == "Maya")
                 {
                     WriteMayaModuleFile();
+                    EnsureMayaOpenMayaCsHost(pluginsDir);
                 }
             }
             catch (Exception ex)
@@ -279,10 +280,51 @@ namespace BabylonJS_Installer
             string modulesDir = Directory.GetParent(this.installDir.TrimEnd('\\', '/')).FullName;
             Directory.CreateDirectory(modulesDir);
             string modFile = Path.Combine(modulesDir, "Maya2Babylon.mod");
-            // Relative module path keeps the .mod portable within the modules folder
+            // Match PR #1153 / post-build deploy: plug-ins only in the .mod line
+            // (scripts path is optional; AE/NE templates still live under the module)
             const string modLine = "+ Maya2Babylon 1.0 ./Maya2Babylon;plug-ins: plug-ins;scripts: scripts";
             File.WriteAllText(modFile, modLine);
             this.form.log("Wrote Maya module file: " + modFile);
+        }
+
+        /// <summary>
+        /// Maya 2025+ (.NET Core) requires openmayacs.dll + openmayacs.runtimeconfig.json
+        /// next to the plugin for host initialization (see BabylonJS/Exporters#1153).
+        /// Prefer the local Maya install copy so the host matches that Maya version.
+        /// </summary>
+        private void EnsureMayaOpenMayaCsHost(string pluginsDir)
+        {
+            var checker = new SoftwareChecker();
+            string mayaBin = Path.Combine(checker.getMayaInstallPath(this.version).TrimEnd('\\', '/'), "bin");
+            string srcDll = Path.Combine(mayaBin, "openmayacs.dll");
+            string srcRuntime = Path.Combine(mayaBin, "openmayacs.runtimeconfig.json");
+            string destDll = Path.Combine(pluginsDir, "openmayacs.dll");
+            string destRuntime = Path.Combine(pluginsDir, "openmayacs.runtimeconfig.json");
+
+            if (File.Exists(srcDll))
+            {
+                File.Copy(srcDll, destDll, true);
+                this.form.log("Copied openmayacs.dll from Maya install: " + srcDll);
+            }
+            else if (!File.Exists(destDll))
+            {
+                this.form.error(
+                    "openmayacs.dll was not found in the Maya install or the package.\n"
+                    + "Expected: " + srcDll + "\n"
+                    + "Without this file Maya cannot start the .NET Core host for Maya2Babylon.");
+            }
+
+            if (File.Exists(srcRuntime))
+            {
+                File.Copy(srcRuntime, destRuntime, true);
+                this.form.log("Copied openmayacs.runtimeconfig.json from Maya install: " + srcRuntime);
+            }
+            else if (!File.Exists(destRuntime))
+            {
+                this.form.warn(
+                    "openmayacs.runtimeconfig.json was not found beside Maya.\n"
+                    + "Expected: " + srcRuntime);
+            }
         }
 
         public async Task<string> GetJSONBodyRequest(string requestURI)

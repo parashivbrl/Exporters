@@ -29,6 +29,7 @@ namespace BabylonJS_Installer
                 "GDImageLibrary.dll",
                 "Maya2Babylon.nll.dll",
                 "Maya2Babylon.nll.deps.json",
+                "openmayacs.dll",
                 "openmayacs.runtimeconfig.json",
                 "Newtonsoft.Json.dll",
                 "TargaImage.dll",
