@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using System.Linq;
 
@@ -106,7 +107,9 @@ namespace BabylonJS_Installer
             if(!this.checker.ensureAdminMode())
             {
                 this.goTab("");
-                this.error("\nApplication is not running in Administrator mode.\nYou should restart the application to ensure its functionnalities.\n");
+                this.warn("\nNot running as Administrator.\n"
+                    + "Maya installs to your Documents modules folder and does not need admin.\n"
+                    + "3ds Max installs under Program Files and still require Administrator mode.\n");
             }
         }
 
@@ -174,7 +177,16 @@ namespace BabylonJS_Installer
             if (location != null && location != "")
             {
                 this.locations[soft][year] = location;
-                labelPath.Text = "Path : " + location;
+                string displayPath = location;
+                if (soft == "Maya")
+                {
+                    string mayaInstall = this.checker.getMayaInstallPath(year);
+                    if (!string.IsNullOrEmpty(mayaInstall))
+                    {
+                        displayPath = location + "  (Maya: " + mayaInstall.TrimEnd('\\', '/') + ")";
+                    }
+                }
+                labelPath.Text = "Path : " + displayPath;
                 labelDate.Visible = true;
                 this.log("Installation found for " + soft + " " + year + "  -> " + location);
                 expDate = this.checker.getInstalledExporterTimestamp(soft, location);
@@ -374,17 +386,80 @@ namespace BabylonJS_Installer
         private void button_locate(string soft, string year)
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
-            fbd.Description = "Locate the software installation folder (ex: \"C:\\Program Files\\Autodesk\\3ds Max 2019\\\")";
+            if (soft == "Maya")
+            {
+                fbd.Description = "Locate the Maya2Babylon module folder (ex: \""
+                    + this.checker.GetMayaModuleRoot(year).TrimEnd('\\')
+                    + "\").\nYou can also select the modules folder or Documents\\maya\\" + year + ".";
+                string defaultModules = this.checker.GetMayaModulesDir(year);
+                if (Directory.Exists(defaultModules))
+                {
+                    fbd.SelectedPath = defaultModules;
+                }
+            }
+            else
+            {
+                fbd.Description = "Locate the software installation folder (ex: \"C:\\Program Files\\Autodesk\\3ds Max 2019\\\")";
+            }
 
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 string selectedPath = fbd.SelectedPath;
                 if (selectedPath != null && selectedPath != "")
                 {
-                    this.locations[soft][year] = selectedPath + "\\";
+                    if (soft == "Maya")
+                    {
+                        selectedPath = NormalizeMayaModuleLocation(selectedPath, year);
+                    }
+                    else
+                    {
+                        selectedPath = selectedPath + "\\";
+                    }
+                    this.locations[soft][year] = selectedPath;
                     this.displayInstall(soft, year);
                 }
             }
+        }
+
+        /// <summary>
+        /// Accepts Maya2Babylon, modules, or Documents\maya\{year} and returns the module root with trailing slash.
+        /// </summary>
+        private string NormalizeMayaModuleLocation(string selectedPath, string year)
+        {
+            selectedPath = selectedPath.TrimEnd('\\', '/');
+            string name = Path.GetFileName(selectedPath);
+
+            if (string.Equals(name, "Maya2Babylon", StringComparison.OrdinalIgnoreCase))
+            {
+                return SoftwareChecker.EnsureTrailingSlash(selectedPath);
+            }
+
+            if (string.Equals(name, "modules", StringComparison.OrdinalIgnoreCase))
+            {
+                return SoftwareChecker.EnsureTrailingSlash(Path.Combine(selectedPath, "Maya2Babylon"));
+            }
+
+            if (string.Equals(name, year, StringComparison.OrdinalIgnoreCase)
+                && Directory.Exists(Path.Combine(selectedPath, "modules")))
+            {
+                return SoftwareChecker.EnsureTrailingSlash(Path.Combine(selectedPath, "modules", "Maya2Babylon"));
+            }
+
+            // If user picked the Autodesk Maya install dir, keep using the Documents module path.
+            string mayaInstall = this.checker.getMayaInstallPath(year);
+            if (!string.IsNullOrEmpty(mayaInstall)
+                && string.Equals(
+                    SoftwareChecker.EnsureTrailingSlash(selectedPath).TrimEnd('\\'),
+                    mayaInstall.TrimEnd('\\'),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                this.warn("Maya plugins install to the Documents modules folder, not Program Files.\n"
+                    + "Using: " + this.checker.GetMayaModuleRoot(year));
+                return this.checker.GetMayaModuleRoot(year);
+            }
+
+            // Fallback: treat selection as the module root
+            return SoftwareChecker.EnsureTrailingSlash(selectedPath);
         }
 
 

@@ -41,15 +41,70 @@ namespace BabylonJS_Installer
                 "NEbabylonStingrayPBSMaterialNodeTemplate.xml"
             } }
         };
+
+        // Relative to the stored location root:
+        // Max  -> Maya/3ds Max install root
+        // Maya -> Documents\maya\{year}\modules\Maya2Babylon\
         public Dictionary<string, string> libFolder = new Dictionary<string, string>()
         {
             { "Max", "bin\\assemblies" },
-            { "Maya", "bin\\plug-ins" },
+            { "Maya", "plug-ins" },
             { "MayaAE", "scripts\\AETemplates" },
             { "MayaNE", "scripts\\NETemplates" }
         };
 
         public MainForm form;
+
+        public static string EnsureTrailingSlash(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return path;
+            return path.EndsWith("\\") || path.EndsWith("/") ? path : path + "\\";
+        }
+
+        public string GetMayaModulesDir(string year)
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "maya", year, "modules");
+        }
+
+        public string GetMayaModuleRoot(string year)
+        {
+            return EnsureTrailingSlash(Path.Combine(GetMayaModulesDir(year), "Maya2Babylon"));
+        }
+
+        public string GetMayaModFile(string year)
+        {
+            return Path.Combine(GetMayaModulesDir(year), "Maya2Babylon.mod");
+        }
+
+        public string GetMayaPluginDllPath(string moduleRoot)
+        {
+            return Path.Combine(EnsureTrailingSlash(moduleRoot), "plug-ins", "Maya2Babylon.nll.dll");
+        }
+
+        /// <summary>
+        /// Returns the Maya install path from the registry, or empty if not installed.
+        /// </summary>
+        public string getMayaInstallPath(string year)
+        {
+            try
+            {
+                RegistryKey localKey = Environment.Is64BitOperatingSystem
+                    ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64)
+                    : RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+
+                object value = localKey
+                    .OpenSubKey(@"SOFTWARE\Autodesk\Maya\" + year + @"\Setup\InstallPath")
+                    ?.GetValue("MAYA_INSTALL_LOCATION");
+                return value != null ? EnsureTrailingSlash(value.ToString()) : "";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return "";
+            }
+        }
 
         public string checkPath(string software, string version, string year)
         {
@@ -73,15 +128,17 @@ namespace BabylonJS_Installer
             }
             else if (software == "Maya")
             {
-                try
+                // Show Maya year only if Autodesk Maya is installed (or a module already exists).
+                string mayaInstall = getMayaInstallPath(year);
+                string moduleRoot = GetMayaModuleRoot(year);
+                bool moduleExists = File.Exists(GetMayaPluginDllPath(moduleRoot))
+                    || Directory.Exists(Path.Combine(moduleRoot, "plug-ins"));
+
+                if (!string.IsNullOrEmpty(mayaInstall) || moduleExists)
                 {
-                    return localKey.OpenSubKey(@"SOFTWARE\Autodesk\Maya\" + year + @"\Setup\InstallPath").GetValue("MAYA_INSTALL_LOCATION").ToString();
+                    return moduleRoot;
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    return "";
-                }
+                return "";
             }
             return "";
         }
@@ -90,19 +147,49 @@ namespace BabylonJS_Installer
         {
             try
             {
-                switch(software)
+                switch (software)
                 {
                     case "Max":
                         return File.GetLastWriteTime(path + "bin\\assemblies\\Max2Babylon.dll");
                     case "Maya":
-                        return File.GetLastWriteTime(path + "bin\\plug-ins\\Maya2Babylon.nll.dll");
+                        string dll = GetMayaPluginDllPath(path);
+                        if (!File.Exists(dll)) return DateTime.MinValue;
+                        return File.GetLastWriteTime(dll);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
             return DateTime.MinValue;
+        }
+
+        private void TryDeleteFile(string fileFullPath, string displayName, ref int errors, ref bool needElevatedProgram)
+        {
+            if (!File.Exists(fileFullPath))
+            {
+                return;
+            }
+
+            try
+            {
+                File.Delete(fileFullPath);
+                this.form.log(displayName + " deleted.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                needElevatedProgram = true;
+                errors++;
+                this.form.error("Cannot access file: " + fileFullPath);
+            }
+            catch (Exception ex)
+            {
+                errors++;
+                this.form.error(
+                    ex.GetType().ToString() + " error while deleting the file : " + displayName + "\n"
+                    + "     At : " + fileFullPath + "\n"
+                    + "     " + ex.Message);
+            }
         }
 
         public void uninstallExporter(string soft, string version, string path)
@@ -112,8 +199,9 @@ namespace BabylonJS_Installer
             int errors = 0;
             bool needElevatedProgram = false;
             string fileFullPath;
+            path = EnsureTrailingSlash(path);
 
-            if(soft == "Max")
+            if (soft == "Max")
             {
                 Directory.CreateDirectory(path + "scripts\\Startup");
                 File.WriteAllText(
@@ -142,28 +230,50 @@ namespace BabylonJS_Installer
 
             foreach (string file in this.files[soft])
             {
-                if (file.Substring(0, 9) == "AEbabylon") fileFullPath = path + this.libFolder[soft + "AE"] + "\\" + file;
-                else if (file.Substring(0, 9) == "NEbabylon") fileFullPath = path + this.libFolder[soft + "NE"] + "\\" + file;
-                else fileFullPath = path + this.libFolder[soft] + "\\" + file;
+                if (file.Length >= 9 && file.Substring(0, 9) == "AEbabylon")
+                    fileFullPath = path + this.libFolder[soft + "AE"] + "\\" + file;
+                else if (file.Length >= 9 && file.Substring(0, 9) == "NEbabylon")
+                    fileFullPath = path + this.libFolder[soft + "NE"] + "\\" + file;
+                else
+                    fileFullPath = path + this.libFolder[soft] + "\\" + file;
 
-                try
+                TryDeleteFile(fileFullPath, file, ref errors, ref needElevatedProgram);
+            }
+
+            if (soft == "Maya")
+            {
+                // Remove module descriptor
+                string modFile = GetMayaModFile(version);
+                TryDeleteFile(modFile, Path.GetFileName(modFile), ref errors, ref needElevatedProgram);
+
+                // Best-effort cleanup of empty module folders
+                TryDeleteEmptyDirectory(Path.Combine(path, "plug-ins"));
+                TryDeleteEmptyDirectory(Path.Combine(path, "scripts", "AETemplates"));
+                TryDeleteEmptyDirectory(Path.Combine(path, "scripts", "NETemplates"));
+                TryDeleteEmptyDirectory(Path.Combine(path, "scripts"));
+                TryDeleteEmptyDirectory(path.TrimEnd('\\', '/'));
+
+                // Clean legacy Program Files drop-in if present (may need admin)
+                string mayaInstall = getMayaInstallPath(version);
+                if (!string.IsNullOrEmpty(mayaInstall))
                 {
-                    File.Delete(fileFullPath);
-                    this.form.log(file + " deleted.");
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    needElevatedProgram = true;
-                    errors++;
-                    this.form.error("Cannot access file: " + fileFullPath);
-                }
-                catch (Exception ex)
-                {
-                    errors++;
-                    this.form.error(
-                        ex.GetType().ToString() + " error while deleting the file : " + file + "\n"
-                        + "     At : " + fileFullPath + "\\" + "\n"
-                        + "     " + ex.Message);
+                    string legacyDll = Path.Combine(mayaInstall, "bin", "plug-ins", "Maya2Babylon.nll.dll");
+                    if (File.Exists(legacyDll))
+                    {
+                        this.form.log("Removing legacy Program Files plugin: " + legacyDll);
+                        TryDeleteFile(legacyDll, "Maya2Babylon.nll.dll (legacy)", ref errors, ref needElevatedProgram);
+                        foreach (string extra in new[] {
+                            "Maya2Babylon.nll.deps.json",
+                            "openmayacs.runtimeconfig.json",
+                            "GDImageLibrary.dll",
+                            "Newtonsoft.Json.dll",
+                            "TargaImage.dll",
+                            "TQ.Texture.dll"
+                        })
+                        {
+                            TryDeleteFile(Path.Combine(mayaInstall, "bin", "plug-ins", extra), extra + " (legacy)", ref errors, ref needElevatedProgram);
+                        }
+                    }
                 }
             }
 
@@ -177,13 +287,30 @@ namespace BabylonJS_Installer
                 if (needElevatedProgram)
                 {
                     this.form.error(
-                    "Please try to run this tool in ADMINISTRATOR MODE. It's necessary to remove files in \"Program Files\" folder (or other protected folders).\n\n"
-                    + String.Format("If you are already running as administrator, Please close {0} {1} and retry uninstalling.\n", soft, version)
+                    "Some files could not be removed (permission denied).\n"
+                    + "For 3ds Max / legacy Program Files installs, try running as Administrator.\n"
+                    + "Also close " + soft + " " + version + " if it is running, then retry.\n"
                     );
                 }
             }
 
             this.form.displayInstall(soft, version);
+        }
+
+        private void TryDeleteEmptyDirectory(string directory)
+        {
+            try
+            {
+                if (Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0)
+                {
+                    Directory.Delete(directory);
+                    this.form.log("Removed empty folder: " + directory);
+                }
+            }
+            catch (Exception ex)
+            {
+                this.form.warn("Could not remove folder " + directory + " : " + ex.Message);
+            }
         }
 
         public void setLatestVersionDate()
@@ -192,7 +319,8 @@ namespace BabylonJS_Installer
             Task<string> jsonRequest = Task.Run(async () => { return await downloader.GetJSONBodyRequest(downloader.GetURLGitHubAPI()); });
             //TO DO Find a better way to parse JSON aswell
             string json = jsonRequest.Result;
-            if(string.IsNullOrEmpty(json) ) {
+            if (string.IsNullOrEmpty(json))
+            {
                 this.latestVersionDate = DateTime.Now.ToLongTimeString();
                 return;
             }
@@ -213,7 +341,8 @@ namespace BabylonJS_Installer
                     break;
 
                 case "Maya":
-                    if (latest <= File.GetLastWriteTime(location + "bin\\plug-ins\\Maya2Babylon.nll.dll")) isLatestversion = true;
+                    string dll = GetMayaPluginDllPath(location);
+                    if (File.Exists(dll) && latest <= File.GetLastWriteTime(dll)) isLatestversion = true;
                     break;
 
                 default:
@@ -232,7 +361,7 @@ namespace BabylonJS_Installer
 
         public void checkNewInstallerVersion()
         {
-            string url_versionFile = "https://raw.githubusercontent.com/BabylonJS/Exporters/master/BabylonJS_Installer/BabylonJS_Installer/BabylonJS_Installer.csproj";
+            string url_versionFile = "https://raw.githubusercontent.com/parashivbrl/Exporters/feat/maya-2026-support/BabylonJS_Installer/BabylonJS_Installer/BabylonJS_Installer.csproj";
 
             string assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
@@ -249,7 +378,7 @@ namespace BabylonJS_Installer
 
                 this.form.log("Current app version : " + currVersion[0] + '.' + currVersion[1] + '.' + currVersion[2]);
                 this.form.log("Server last version : " + servVersion[0] + '.' + servVersion[1] + '.' + servVersion[2]);
-            
+
                 bool isUpToDate = true;
                 if (int.Parse(servVersion[0]) > int.Parse(currVersion[0])) isUpToDate = false;
                 else if (int.Parse(servVersion[0]) == int.Parse(currVersion[0]))
@@ -264,11 +393,11 @@ namespace BabylonJS_Installer
                 if (isUpToDate) this.form.log("Application up to date !\n\n");
                 else
                 {
-                    this.form.warn("A new version is available here : https://github.com/BabylonJS/Exporters/releases \n\n");
+                    this.form.warn("A new version is available here : https://github.com/parashivbrl/Exporters/releases \n\n");
                     this.form.goTab("Logs");
                 }
             }
-            catch( Exception ex )
+            catch (Exception ex)
             {
                 this.form.error($"Error : failed to check for new installer version\n{ex.Message}\n");
                 this.form.goTab("Logs");
