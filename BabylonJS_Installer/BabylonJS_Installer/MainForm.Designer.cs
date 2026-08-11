@@ -70,6 +70,12 @@ namespace BabylonJS_Installer
 			this.label_Max22_Info = new System.Windows.Forms.Label();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
 			this.panel2 = new System.Windows.Forms.Panel();
+			this.maya2026 = new System.Windows.Forms.GroupBox();
+			this.button_Maya26_Locate = new System.Windows.Forms.Button();
+			this.button_Maya26_Delete = new System.Windows.Forms.Button();
+			this.button_Maya26_Update = new System.Windows.Forms.Button();
+			this.label_Maya26_ExpDate = new System.Windows.Forms.Label();
+			this.label_Maya26_Info = new System.Windows.Forms.Label();
 			this.maya2024 = new System.Windows.Forms.GroupBox();
 			this.button_Maya24_Locate = new System.Windows.Forms.Button();
 			this.button_Maya24_Delete = new System.Windows.Forms.Button();
@@ -112,6 +118,7 @@ namespace BabylonJS_Installer
 			this.max2022.SuspendLayout();
 			this.tabPage2.SuspendLayout();
 			this.panel2.SuspendLayout();
+			this.maya2026.SuspendLayout();
 			this.maya2024.SuspendLayout();
 			this.maya2023.SuspendLayout();
 			this.maya2022.SuspendLayout();
@@ -581,6 +588,7 @@ namespace BabylonJS_Installer
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.panel2.AutoScroll = true;
+			this.panel2.Controls.Add(this.maya2026);
 			this.panel2.Controls.Add(this.maya2024);
 			this.panel2.Controls.Add(this.maya2023);
 			this.panel2.Controls.Add(this.maya2022);
@@ -590,6 +598,72 @@ namespace BabylonJS_Installer
 			this.panel2.Size = new System.Drawing.Size(533, 636);
 			this.panel2.TabIndex = 1;
 			// 
+			// maya2026
+			// 
+			this.maya2026.Controls.Add(this.button_Maya26_Locate);
+			this.maya2026.Controls.Add(this.button_Maya26_Delete);
+			this.maya2026.Controls.Add(this.button_Maya26_Update);
+			this.maya2026.Controls.Add(this.label_Maya26_ExpDate);
+			this.maya2026.Controls.Add(this.label_Maya26_Info);
+			this.maya2026.Location = new System.Drawing.Point(4, 4);
+			this.maya2026.Name = "maya2026";
+			this.maya2026.Size = new System.Drawing.Size(506, 80);
+			this.maya2026.TabIndex = 11;
+			this.maya2026.TabStop = false;
+			this.maya2026.Text = "Maya 2026";
+			// 
+			// button_Maya26_Locate
+			// 
+			this.button_Maya26_Locate.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+			this.button_Maya26_Locate.Location = new System.Drawing.Point(352, 50);
+			this.button_Maya26_Locate.Name = "button_Maya26_Locate";
+			this.button_Maya26_Locate.Size = new System.Drawing.Size(71, 25);
+			this.button_Maya26_Locate.TabIndex = 101;
+			this.button_Maya26_Locate.Text = "(re)Locate";
+			this.button_Maya26_Locate.UseVisualStyleBackColor = true;
+			this.button_Maya26_Locate.Click += new System.EventHandler(this.Button_Maya26_Locate_Click);
+			// 
+			// button_Maya26_Delete
+			// 
+			this.button_Maya26_Delete.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+			this.button_Maya26_Delete.Location = new System.Drawing.Point(430, 50);
+			this.button_Maya26_Delete.Name = "button_Maya26_Delete";
+			this.button_Maya26_Delete.Size = new System.Drawing.Size(71, 25);
+			this.button_Maya26_Delete.TabIndex = 103;
+			this.button_Maya26_Delete.Text = "Uninstall";
+			this.button_Maya26_Delete.UseVisualStyleBackColor = true;
+			this.button_Maya26_Delete.Click += new System.EventHandler(this.Button_Maya26_Delete_Click);
+			// 
+			// button_Maya26_Update
+			// 
+			this.button_Maya26_Update.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+			this.button_Maya26_Update.Location = new System.Drawing.Point(275, 50);
+			this.button_Maya26_Update.Name = "button_Maya26_Update";
+			this.button_Maya26_Update.Size = new System.Drawing.Size(71, 25);
+			this.button_Maya26_Update.TabIndex = 102;
+			this.button_Maya26_Update.Text = "Update";
+			this.button_Maya26_Update.UseVisualStyleBackColor = true;
+			this.button_Maya26_Update.Click += new System.EventHandler(this.Button_Maya26_Update_Click);
+			// 
+			// label_Maya26_ExpDate
+			// 
+			this.label_Maya26_ExpDate.AutoSize = true;
+			this.label_Maya26_ExpDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+			this.label_Maya26_ExpDate.Location = new System.Drawing.Point(6, 50);
+			this.label_Maya26_ExpDate.Name = "label_Maya26_ExpDate";
+			this.label_Maya26_ExpDate.Size = new System.Drawing.Size(53, 15);
+			this.label_Maya26_ExpDate.TabIndex = 6;
+			this.label_Maya26_ExpDate.Text = "Exporter";
+			// 
+			// label_Maya26_Info
+			// 
+			this.label_Maya26_Info.AutoSize = true;
+			this.label_Maya26_Info.Location = new System.Drawing.Point(6, 20);
+			this.label_Maya26_Info.Name = "label_Maya26_Info";
+			this.label_Maya26_Info.Size = new System.Drawing.Size(165, 18);
+			this.label_Maya26_Info.TabIndex = 3;
+			this.label_Maya26_Info.Text = "No installation detected.";
+			// 
 			// maya2024
 			// 
 			this.maya2024.Controls.Add(this.button_Maya24_Locate);
@@ -597,7 +671,7 @@ namespace BabylonJS_Installer
 			this.maya2024.Controls.Add(this.button_Maya24_Update);
 			this.maya2024.Controls.Add(this.label_Maya24_ExpDate);
 			this.maya2024.Controls.Add(this.label_Maya24_Info);
-			this.maya2024.Location = new System.Drawing.Point(4, 4);
+			this.maya2024.Location = new System.Drawing.Point(4, 92);
 			this.maya2024.Name = "maya2024";
 			this.maya2024.Size = new System.Drawing.Size(506, 80);
 			this.maya2024.TabIndex = 10;
@@ -663,7 +737,7 @@ namespace BabylonJS_Installer
 			this.maya2023.Controls.Add(this.button_Maya23_Update);
 			this.maya2023.Controls.Add(this.label_Maya23_ExpDate);
 			this.maya2023.Controls.Add(this.label_Maya23_Info);
-			this.maya2023.Location = new System.Drawing.Point(4, 92);
+			this.maya2023.Location = new System.Drawing.Point(4, 180);
 			this.maya2023.Name = "maya2023";
 			this.maya2023.Size = new System.Drawing.Size(506, 80);
 			this.maya2023.TabIndex = 9;
@@ -729,7 +803,7 @@ namespace BabylonJS_Installer
 			this.maya2022.Controls.Add(this.button_Maya22_Update);
 			this.maya2022.Controls.Add(this.label_Maya22_ExpDate);
 			this.maya2022.Controls.Add(this.label_Maya22_Info);
-			this.maya2022.Location = new System.Drawing.Point(4, 180);
+			this.maya2022.Location = new System.Drawing.Point(4, 268);
 			this.maya2022.Name = "maya2022";
 			this.maya2022.Size = new System.Drawing.Size(506, 80);
 			this.maya2022.TabIndex = 9;
@@ -795,7 +869,7 @@ namespace BabylonJS_Installer
 			this.maya2020.Controls.Add(this.button_Maya20_Update);
 			this.maya2020.Controls.Add(this.label_Maya20_ExpDate);
 			this.maya2020.Controls.Add(this.label_Maya20_Info);
-			this.maya2020.Location = new System.Drawing.Point(4, 268);
+			this.maya2020.Location = new System.Drawing.Point(4, 356);
 			this.maya2020.Name = "maya2020";
 			this.maya2020.Size = new System.Drawing.Size(506, 80);
 			this.maya2020.TabIndex = 9;
@@ -972,6 +1046,8 @@ namespace BabylonJS_Installer
 			this.max2022.PerformLayout();
 			this.tabPage2.ResumeLayout(false);
 			this.panel2.ResumeLayout(false);
+			this.maya2026.ResumeLayout(false);
+			this.maya2026.PerformLayout();
 			this.maya2024.ResumeLayout(false);
 			this.maya2024.PerformLayout();
 			this.maya2023.ResumeLayout(false);
@@ -1035,6 +1111,12 @@ namespace BabylonJS_Installer
         private System.Windows.Forms.Button button_Maya23_Update;
         private System.Windows.Forms.Label label_Maya23_ExpDate;
         private System.Windows.Forms.Label label_Maya23_Info;
+        private System.Windows.Forms.GroupBox maya2026;
+        private System.Windows.Forms.Button button_Maya26_Locate;
+        private System.Windows.Forms.Button button_Maya26_Delete;
+        private System.Windows.Forms.Button button_Maya26_Update;
+        private System.Windows.Forms.Label label_Maya26_ExpDate;
+        private System.Windows.Forms.Label label_Maya26_Info;
         private System.Windows.Forms.GroupBox maya2024;
         private System.Windows.Forms.Button button_Maya24_Locate;
         private System.Windows.Forms.Button button_Maya24_Delete;

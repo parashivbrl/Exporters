@@ -10,7 +10,7 @@ permissions:
 
 env:
   MAX_VERSIONS: '2022 2023 2024 2025 2026 2027'
-  MAYA_VERSIONS: '2020 2022 2023 2024'
+  MAYA_VERSIONS: '2020 2022 2023 2024 2026'
 
 jobs:
   build:
@@ -23,6 +23,11 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
       - name: Setup NuGet
         uses: nuget/setup-nuget@v2
@@ -100,19 +105,21 @@ jobs:
             }
           }
 
-          # Maya zips
-          foreach ($year in "${{ env.MAYA_VERSIONS }}".Split(' ')) {
-            $src = "Maya\bin\Release\$year"
-            if (Test-Path $src) {
-              $tmp = "$staging\tmp"
-              New-Item -ItemType Directory -Path $tmp -Force | Out-Null
-              Copy-Item -Path "$src\*.dll" -Destination $tmp -Force
-              Copy-Item -Path "Maya\AETemplates" -Destination "$tmp\Maya\AETemplates" -Recurse -Force -ErrorAction SilentlyContinue
-              Copy-Item -Path "Maya\NETemplates" -Destination "$tmp\Maya\NETemplates" -Recurse -Force -ErrorAction SilentlyContinue
-              Compress-Archive -Path "$tmp\*" -DestinationPath "$staging\Maya_$year.zip" -Force
-              Remove-Item -Path $tmp -Recurse -Force
-            }
-          }
+      # Maya zips
+      foreach ($year in "${{ env.MAYA_VERSIONS }}".Split(' ')) {
+        $src = "Maya\bin\Release\$year"
+        if (Test-Path $src) {
+          $tmp = "$staging\tmp"
+          New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+          Copy-Item -Path "$src\*.dll" -Destination $tmp -Force
+          # Maya 2026 (.NET 8) also needs runtime/deps JSON next to the plugin
+          Copy-Item -Path "$src\*.json" -Destination $tmp -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "Maya\AETemplates" -Destination "$tmp\Maya\AETemplates" -Recurse -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "Maya\NETemplates" -Destination "$tmp\Maya\NETemplates" -Recurse -Force -ErrorAction SilentlyContinue
+          Compress-Archive -Path "$tmp\*" -DestinationPath "$staging\Maya_$year.zip" -Force
+          Remove-Item -Path $tmp -Recurse -Force
+        }
+      }
 
           # Installer zip
           $installerDir = "BabylonJS_Installer\BabylonJS_Installer\bin\Release"

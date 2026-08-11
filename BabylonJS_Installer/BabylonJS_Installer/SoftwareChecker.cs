@@ -28,6 +28,8 @@ namespace BabylonJS_Installer
             { "Maya", new string[] {
                 "GDImageLibrary.dll",
                 "Maya2Babylon.nll.dll",
+                "Maya2Babylon.nll.deps.json",
+                "openmayacs.runtimeconfig.json",
                 "Newtonsoft.Json.dll",
                 "TargaImage.dll",
                 "TQ.Texture.dll",
