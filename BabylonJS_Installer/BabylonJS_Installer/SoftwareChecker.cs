@@ -85,7 +85,8 @@ namespace BabylonJS_Installer
         }
 
         /// <summary>
-        /// Returns the Maya install path from the registry, or empty if not installed.
+        /// Returns the Maya install path from the registry, or a filesystem fallback.
+        /// Newer Maya installs may omit Setup\InstallPath even when Program Files has Maya{year}.
         /// </summary>
         public string getMayaInstallPath(string year)
         {
@@ -98,13 +99,46 @@ namespace BabylonJS_Installer
                 object value = localKey
                     .OpenSubKey(@"SOFTWARE\Autodesk\Maya\" + year + @"\Setup\InstallPath")
                     ?.GetValue("MAYA_INSTALL_LOCATION");
-                return value != null ? EnsureTrailingSlash(value.ToString()) : "";
+                if (value != null)
+                {
+                    string fromRegistry = EnsureTrailingSlash(value.ToString());
+                    if (Directory.Exists(fromRegistry))
+                    {
+                        return fromRegistry;
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return "";
             }
+
+            // Fallback: default Autodesk layout (Maya 2025/2026 on this machine have no InstallPath key)
+            string defaultPath = EnsureTrailingSlash(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Autodesk", "Maya" + year));
+            if (Directory.Exists(defaultPath))
+            {
+                return defaultPath;
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Candidate paths for openmayacs.dll for a given Maya year (bin first, then bin\plug-ins).
+        /// </summary>
+        public IEnumerable<string> GetMayaOpenMayaCsCandidates(string year)
+        {
+            string install = getMayaInstallPath(year);
+            if (!string.IsNullOrEmpty(install))
+            {
+                yield return Path.Combine(install, "bin", "openmayacs.dll");
+                yield return Path.Combine(install, "bin", "plug-ins", "openmayacs.dll");
+            }
+
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            yield return Path.Combine(programFiles, "Autodesk", "Maya" + year, "bin", "openmayacs.dll");
+            yield return Path.Combine(programFiles, "Autodesk", "Maya" + year, "bin", "plug-ins", "openmayacs.dll");
         }
 
         public string checkPath(string software, string version, string year)
