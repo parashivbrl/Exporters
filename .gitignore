@@ -181,3 +181,4 @@ __pycache__
 .pytest_cache
 
 BabylonJS_Installer/Dist/*
+release-staging/
