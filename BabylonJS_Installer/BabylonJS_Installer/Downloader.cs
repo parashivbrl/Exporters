@@ -338,7 +338,7 @@ namespace BabylonJS_Installer
             else if (!File.Exists(destDll))
             {
                 string expected = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                    SoftwareChecker.GetNativeProgramFiles(),
                     "Autodesk", "Maya" + this.version, "bin", "openmayacs.dll");
                 this.form.error(
                     "openmayacs.dll was not found in the Maya install or the package.\n"

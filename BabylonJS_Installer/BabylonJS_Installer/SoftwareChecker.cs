@@ -85,6 +85,20 @@ namespace BabylonJS_Installer
         }
 
         /// <summary>
+        /// Native 64-bit Program Files. A 32-bit (Prefer32Bit) process sees SpecialFolder.ProgramFiles as
+        /// "Program Files (x86)", but Maya always installs under "Program Files".
+        /// </summary>
+        public static string GetNativeProgramFiles()
+        {
+            string programW6432 = Environment.GetEnvironmentVariable("ProgramW6432");
+            if (!string.IsNullOrEmpty(programW6432))
+            {
+                return programW6432;
+            }
+            return Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        }
+
+        /// <summary>
         /// Returns the Maya install path from the registry, or a filesystem fallback.
         /// Newer Maya installs may omit Setup\InstallPath even when Program Files has Maya{year}.
         /// </summary>
@@ -115,7 +129,7 @@ namespace BabylonJS_Installer
 
             // Fallback: default Autodesk layout (Maya 2025/2026 on this machine have no InstallPath key)
             string defaultPath = EnsureTrailingSlash(
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Autodesk", "Maya" + year));
+                Path.Combine(GetNativeProgramFiles(), "Autodesk", "Maya" + year));
             if (Directory.Exists(defaultPath))
             {
                 return defaultPath;
@@ -136,7 +150,7 @@ namespace BabylonJS_Installer
                 yield return Path.Combine(install, "bin", "plug-ins", "openmayacs.dll");
             }
 
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string programFiles = GetNativeProgramFiles();
             yield return Path.Combine(programFiles, "Autodesk", "Maya" + year, "bin", "openmayacs.dll");
             yield return Path.Combine(programFiles, "Autodesk", "Maya" + year, "bin", "plug-ins", "openmayacs.dll");
         }
