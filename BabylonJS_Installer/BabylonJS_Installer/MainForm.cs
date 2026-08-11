@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using System.Linq;
 
@@ -34,6 +35,9 @@ namespace BabylonJS_Installer
             this.versions["Max"].Add("2022", "24");
 
             this.versions["Maya"] = new Dictionary<string, string>();
+            this.versions["Maya"].Add("2027", "27");
+            this.versions["Maya"].Add("2026", "26");
+            this.versions["Maya"].Add("2025", "25");
             this.versions["Maya"].Add("2024", "24");
             this.versions["Maya"].Add("2023", "23");
             this.versions["Maya"].Add("2022", "22");
@@ -58,6 +62,9 @@ namespace BabylonJS_Installer
             this.labels["Max"].Add("2023", new[] { this.label_Max23_Info, this.label_Max23_ExpDate });
             this.labels["Max"].Add("2022", new[] { this.label_Max22_Info, this.label_Max22_ExpDate });
             this.labels["Maya"] = new Dictionary<string, Label[]>();
+            this.labels["Maya"].Add("2027", new[] { this.label_Maya27_Info, this.label_Maya27_ExpDate });
+            this.labels["Maya"].Add("2026", new[] { this.label_Maya26_Info, this.label_Maya26_ExpDate });
+            this.labels["Maya"].Add("2025", new[] { this.label_Maya25_Info, this.label_Maya25_ExpDate });
             this.labels["Maya"].Add("2024", new[] { this.label_Maya24_Info, this.label_Maya24_ExpDate });
             this.labels["Maya"].Add("2023", new[] { this.label_Maya23_Info, this.label_Maya23_ExpDate });
             this.labels["Maya"].Add("2022", new[] { this.label_Maya22_Info, this.label_Maya22_ExpDate });
@@ -72,6 +79,9 @@ namespace BabylonJS_Installer
             this.buttons["Max"].Add("2023", new[] { this.button_Max23_Update, this.button_Max23_Delete, this.button_Max23_Locate });
             this.buttons["Max"].Add("2022", new[] { this.button_Max22_Update, this.button_Max22_Delete, this.button_Max22_Locate });
             this.buttons["Maya"] = new Dictionary<string, Button[]>();
+            this.buttons["Maya"].Add("2027", new[] { this.button_Maya27_Update, this.button_Maya27_Delete, this.button_Maya27_Locate });
+            this.buttons["Maya"].Add("2026", new[] { this.button_Maya26_Update, this.button_Maya26_Delete, this.button_Maya26_Locate });
+            this.buttons["Maya"].Add("2025", new[] { this.button_Maya25_Update, this.button_Maya25_Delete, this.button_Maya25_Locate });
             this.buttons["Maya"].Add("2024", new[] { this.button_Maya24_Update, this.button_Maya24_Delete, this.button_Maya24_Locate });
             this.buttons["Maya"].Add("2023", new[] { this.button_Maya23_Update, this.button_Maya23_Delete, this.button_Maya23_Locate });
             this.buttons["Maya"].Add("2022", new[] { this.button_Maya22_Update, this.button_Maya22_Delete, this.button_Maya22_Locate });
@@ -97,7 +107,9 @@ namespace BabylonJS_Installer
             if(!this.checker.ensureAdminMode())
             {
                 this.goTab("");
-                this.error("\nApplication is not running in Administrator mode.\nYou should restart the application to ensure its functionnalities.\n");
+                this.warn("\nNot running as Administrator.\n"
+                    + "Maya installs to your Documents modules folder and does not need admin.\n"
+                    + "3ds Max installs under Program Files and still require Administrator mode.\n");
             }
         }
 
@@ -165,7 +177,16 @@ namespace BabylonJS_Installer
             if (location != null && location != "")
             {
                 this.locations[soft][year] = location;
-                labelPath.Text = "Path : " + location;
+                string displayPath = location;
+                if (soft == "Maya")
+                {
+                    string mayaInstall = this.checker.getMayaInstallPath(year);
+                    if (!string.IsNullOrEmpty(mayaInstall))
+                    {
+                        displayPath = location + "  (Maya: " + mayaInstall.TrimEnd('\\', '/') + ")";
+                    }
+                }
+                labelPath.Text = "Path : " + displayPath;
                 labelDate.Visible = true;
                 this.log("Installation found for " + soft + " " + year + "  -> " + location);
                 expDate = this.checker.getInstalledExporterTimestamp(soft, location);
@@ -253,6 +274,18 @@ namespace BabylonJS_Installer
             this.button_update("Max", "2022");
         }
  
+        private void Button_Maya27_Update_Click(object sender, EventArgs e)
+        {
+            this.button_update("Maya", "2027");
+        }
+        private void Button_Maya26_Update_Click(object sender, EventArgs e)
+        {
+            this.button_update("Maya", "2026");
+        }
+        private void Button_Maya25_Update_Click(object sender, EventArgs e)
+        {
+            this.button_update("Maya", "2025");
+        }
         private void Button_Maya24_Update_Click(object sender, EventArgs e)
         {
             this.button_update("Maya", "2024");
@@ -316,6 +349,18 @@ namespace BabylonJS_Installer
             this.button_delete("Max", "2022");
         }
 
+        private void Button_Maya27_Delete_Click(object sender, EventArgs e)
+        {
+            this.button_delete("Maya", "2027");
+        }
+        private void Button_Maya26_Delete_Click(object sender, EventArgs e)
+        {
+            this.button_delete("Maya", "2026");
+        }
+        private void Button_Maya25_Delete_Click(object sender, EventArgs e)
+        {
+            this.button_delete("Maya", "2025");
+        }
         private void Button_Maya24_Delete_Click(object sender, EventArgs e)
         {
             this.button_delete("Maya", "2024");
@@ -341,17 +386,80 @@ namespace BabylonJS_Installer
         private void button_locate(string soft, string year)
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
-            fbd.Description = "Locate the software installation folder (ex: \"C:\\Program Files\\Autodesk\\3ds Max 2019\\\")";
+            if (soft == "Maya")
+            {
+                fbd.Description = "Locate the Maya2Babylon module folder (ex: \""
+                    + this.checker.GetMayaModuleRoot(year).TrimEnd('\\')
+                    + "\").\nYou can also select the modules folder or Documents\\maya\\" + year + ".";
+                string defaultModules = this.checker.GetMayaModulesDir(year);
+                if (Directory.Exists(defaultModules))
+                {
+                    fbd.SelectedPath = defaultModules;
+                }
+            }
+            else
+            {
+                fbd.Description = "Locate the software installation folder (ex: \"C:\\Program Files\\Autodesk\\3ds Max 2019\\\")";
+            }
 
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 string selectedPath = fbd.SelectedPath;
                 if (selectedPath != null && selectedPath != "")
                 {
-                    this.locations[soft][year] = selectedPath + "\\";
+                    if (soft == "Maya")
+                    {
+                        selectedPath = NormalizeMayaModuleLocation(selectedPath, year);
+                    }
+                    else
+                    {
+                        selectedPath = selectedPath + "\\";
+                    }
+                    this.locations[soft][year] = selectedPath;
                     this.displayInstall(soft, year);
                 }
             }
+        }
+
+        /// <summary>
+        /// Accepts Maya2Babylon, modules, or Documents\maya\{year} and returns the module root with trailing slash.
+        /// </summary>
+        private string NormalizeMayaModuleLocation(string selectedPath, string year)
+        {
+            selectedPath = selectedPath.TrimEnd('\\', '/');
+            string name = Path.GetFileName(selectedPath);
+
+            if (string.Equals(name, "Maya2Babylon", StringComparison.OrdinalIgnoreCase))
+            {
+                return SoftwareChecker.EnsureTrailingSlash(selectedPath);
+            }
+
+            if (string.Equals(name, "modules", StringComparison.OrdinalIgnoreCase))
+            {
+                return SoftwareChecker.EnsureTrailingSlash(Path.Combine(selectedPath, "Maya2Babylon"));
+            }
+
+            if (string.Equals(name, year, StringComparison.OrdinalIgnoreCase)
+                && Directory.Exists(Path.Combine(selectedPath, "modules")))
+            {
+                return SoftwareChecker.EnsureTrailingSlash(Path.Combine(selectedPath, "modules", "Maya2Babylon"));
+            }
+
+            // If user picked the Autodesk Maya install dir, keep using the Documents module path.
+            string mayaInstall = this.checker.getMayaInstallPath(year);
+            if (!string.IsNullOrEmpty(mayaInstall)
+                && string.Equals(
+                    SoftwareChecker.EnsureTrailingSlash(selectedPath).TrimEnd('\\'),
+                    mayaInstall.TrimEnd('\\'),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                this.warn("Maya plugins install to the Documents modules folder, not Program Files.\n"
+                    + "Using: " + this.checker.GetMayaModuleRoot(year));
+                return this.checker.GetMayaModuleRoot(year);
+            }
+
+            // Fallback: treat selection as the module root
+            return SoftwareChecker.EnsureTrailingSlash(selectedPath);
         }
 
 
@@ -380,6 +488,18 @@ namespace BabylonJS_Installer
             this.button_locate("Max", "2022");
         }
 
+        private void Button_Maya27_Locate_Click(object sender, EventArgs e)
+        {
+            this.button_locate("Maya", "2027");
+        }
+        private void Button_Maya26_Locate_Click(object sender, EventArgs e)
+        {
+            this.button_locate("Maya", "2026");
+        }
+        private void Button_Maya25_Locate_Click(object sender, EventArgs e)
+        {
+            this.button_locate("Maya", "2025");
+        }
         private void Button_Maya24_Locate_Click(object sender, EventArgs e)
         {
             this.button_locate("Maya", "2024");

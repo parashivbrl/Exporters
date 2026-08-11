@@ -7,7 +7,7 @@ on:
 env:
   BuildConfiguration: Release
   BuildPlatform: Any CPU
-  MAYA_VERSIONS: '2020 2022 2023 2024'
+  MAYA_VERSIONS: '2020 2022 2023 2024 2025 2026 2027'
 
 jobs:
   build-max:
@@ -73,6 +73,13 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
@@ -112,6 +119,7 @@ jobs:
           name: maya-binaries
           path: |
             Maya/**/bin/**/*.dll
+            Maya/**/bin/**/*.json
             artifacts/
 
   build-installer:

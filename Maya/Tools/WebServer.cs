@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+#if !MAYA_NETCORE
 using System.Web;
+#endif
 using System.Threading.Tasks;
 
 namespace Maya2Babylon
@@ -65,7 +67,11 @@ namespace Maya2Babylon
 
                     try
                     {
+#if MAYA_NETCORE
+                        var path = Path.Combine(SceneFolder, WebUtility.UrlDecode(url.PathAndQuery.Substring(1)));
+#else
                         var path = Path.Combine(SceneFolder, HttpUtility.UrlDecode(url.PathAndQuery.Substring(1)));
+#endif
                         var questionMarkIndex = path.IndexOf("?");
                         if (questionMarkIndex != -1)
                         {
